@@ -33,7 +33,7 @@ Menu, Tray, Add, %WinTitle%, mDoNothing
 Menu, Tray, Default, %WinTitle%
 Menu, Tray, Disable, %WinTitle%
 Menu, Tray, Add      ; time for a nice separator
-Menu, Tray, Add, Edit DockWin.ini, mEdit
+Menu, Tray, Add, Edit %FileName%, mEdit
 Menu, Tray, Add, Capture Screens - Shift+Win+0, mCapture
 Menu, Tray, Add, Restore Screens - Win+0, mRestore
 Menu, Tray, Add      ; time for a nice separator
