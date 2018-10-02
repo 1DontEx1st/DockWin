@@ -1,10 +1,11 @@
-;DockWin v0.7 - Save and Restore window positions when docking/undocking (using hotkeys)
+;DockWin v0.9 - Save and Restore window positions when docking/undocking (using hotkeys)
 ; Paul Troiano, 6/2014
 ; Updated by Ashley Dawson 7/2015
 ; Updated by Carlo Costanzo 11/2016
 ; Updated by Rene Weselowski 7/2017,9/2017
+; Updated by Darren Greenberg 9/2018
 ;
-; To use comandline switches compile as exe and use:
+; To use command line switches compile as exe and use:
 ; /restore - restore Window-Configuration on start
 ;
 ; Hotkeys: ^ = Control; ! = Alt; + = Shift; # = Windows key; * = Wildcard;
@@ -13,11 +14,12 @@
 ;#InstallKeybdHook
 #SingleInstance, Force
 SetTitleMatchMode, 2		; 2: A window's title can contain WinTitle anywhere inside it to be a match. 
-SetTitleMatchMode, Fast		;Fast is default
+;SetTitleMatchMode, Fast		;Fast is default
 DetectHiddenWindows, off	;Off is default
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 CrLf=`r`n
-FileName:="WinPos.txt"
+FileName:="DockWin.ini"
+ParmVals:="Title x y height width maximized path"
 
 FileInstall, DockWin.ico, %A_ScriptDir%\DockWin.ico
 Menu, Tray, Icon, %A_ScriptDir%\DockWin.ico,, 1
@@ -31,10 +33,11 @@ Menu, Tray, Add, %WinTitle%, mDoNothing
 Menu, Tray, Default, %WinTitle%
 Menu, Tray, Disable, %WinTitle%
 Menu, Tray, Add      ; time for a nice separator
-Menu, Tray, Add, Edit WinPos.txt, mEdit
+Menu, Tray, Add, Edit DockWin.ini, mEdit
 Menu, Tray, Add, Capture Screens - Shift+Win+0, mCapture
 Menu, Tray, Add, Restore Screens - Win+0, mRestore
 Menu, Tray, Add      ; time for a nice separator
+Menu, Tray, Add, Reload %WinTitle%, mReload
 Menu, Tray, Add, Exit %WinTitle%, mExit
 
 Loop, %0% {                       ;for each command line parameter
@@ -53,6 +56,14 @@ Run, Notepad %A_WorkingDir%\%FileName%, %A_WorkingDir%, UseErrorLevel
 Return     ; failsafe / probably never hits this line
 
 ; ====
+mReload:
+; ====
+
+Reload
+
+Return
+
+; ====
 mExit:
 ; ====
 
@@ -64,27 +75,23 @@ ExitApp, 0
 #0::
 mRestore:
   WinGetActiveTitle, SavedActiveWindow
-  ParmVals:="Title x y height width maximized path"
   SectionToFind:= SectionHeader()
   SectionFound:= 0
- 
   Loop, Read, %FileName%
   {
     if !SectionFound
     {
       ;Read through file until correct section found
       If (A_LoopReadLine<>SectionToFind) 
+	  {
 		Continue
+	  }
     }	  
-
-		;Exit if another section reached
+  		;Exit if another section reached
 		If ( SectionFound and SubStr(A_LoopReadLine,1,8)="SECTION:")
 			Break
-
 		SectionFound:=1
-		
 		Win_Title:="", Win_x:=0, Win_y:=0, Win_width:=0, Win_height:=0, Win_maximized:=0
-
 		Loop, Parse, A_LoopReadLine, CSV 
 		{
 			EqualPos:=InStr(A_LoopField,"=")
@@ -100,14 +107,15 @@ mRestore:
 				Win_%Var%:=Val  
 			}
 		}
-		
+		Progress, m2 b fs18 zh0, Restoring:`n`n%Win_Title%, , , Courier New
 		;Check if program is already running, if not, start it
 		If  (!WinExist(Win_Title) and (Win_path<>""))
 		{
 			Try
 			{
-				Run %Win_path%	
-				sleep 1000		;Give some time for the program to launch.	
+				Run %Win_path%
+				WinWaitActive, %Win_Title%
+				;sleep 1000		
 			}
 		}
 
@@ -138,6 +146,8 @@ mRestore:
 
   ;Restore window that was active at beginning of script
   WinActivate, %SavedActiveWindow%
+  Progress,Off
+  Reload
 RETURN
 
 
@@ -188,6 +198,7 @@ mCapture:
 
   ;Restore active window
   WinActivate, %SavedActiveWindow%
+  MsgBox Window Capture Complete!
 RETURN
 
 ; -------
