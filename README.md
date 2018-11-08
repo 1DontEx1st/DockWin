@@ -1,3 +1,5 @@
+I've moved my copy of this repo to BitBucket (https://bitbucket.org/n3rrad/dockwin)
+
 # DockWin
 Autohotkey(https://autohotkey.com/) Script to save and restore positions of windows.
 
